@@ -1,14 +1,5 @@
 "use client";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
-import classNames from "classnames";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
-import { Toaster } from "sonner";
-import { z } from "zod";
-
 import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import type { getEventLocationValue } from "@calcom/app-store/locations";
 import { getSuccessPageLocationMessage, guessEventLocationType } from "@calcom/app-store/locations";
@@ -22,7 +13,7 @@ import {
   useIsEmbed,
 } from "@calcom/embed-core/embed-iframe";
 import { Price } from "@calcom/features/bookings/components/event-meta/Price";
-import { getCalendarLinks, CalendarLinkType } from "@calcom/features/bookings/lib/getCalendarLinks";
+import { CalendarLinkType, getCalendarLinks } from "@calcom/features/bookings/lib/getCalendarLinks";
 import { RATING_OPTIONS, validateRating } from "@calcom/features/bookings/lib/rating";
 import { isWithinMinimumRescheduleNotice as isWithinMinimumRescheduleNoticeUtil } from "@calcom/features/bookings/lib/reschedule/isWithinMinimumRescheduleNotice";
 import type { nameObjectSchema } from "@calcom/features/eventtypes/lib/eventNaming";
@@ -39,12 +30,10 @@ import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import { getEveryFreqFor } from "@calcom/lib/recurringStrings";
 import { getIs24hClockFromLocalStorage, isBrowserLocale24h } from "@calcom/lib/timeFormat";
-import { getTimeShiftFlags, getFirstShiftFlags } from "@calcom/lib/timeShift";
+import { getFirstShiftFlags, getTimeShiftFlags } from "@calcom/lib/timeShift";
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import { localStorage } from "@calcom/lib/webstorage";
-import { AssignmentReasonEnum, BookingStatus, SchedulingType } from "@calcom/prisma/enums";
-
-import assignmentReasonBadgeTitleMap from "@calcom/web/lib/booking/assignmentReasonBadgeTitleMap";
+import { type AssignmentReasonEnum, BookingStatus, SchedulingType } from "@calcom/prisma/enums";
 import { bookingMetadataSchema } from "@calcom/prisma/zod-utils";
 import { trpc } from "@calcom/trpc/react";
 import { Alert } from "@calcom/ui/components/alert";
@@ -54,20 +43,22 @@ import { Button } from "@calcom/ui/components/button";
 import { EmptyScreen } from "@calcom/ui/components/empty-screen";
 import { EmailInput, TextArea } from "@calcom/ui/components/form";
 import { Icon } from "@calcom/ui/components/icon";
-import {
-  CalendarIcon,
-  CheckIcon,
-  ChevronLeftIcon,
-  ExternalLinkIcon,
-  XIcon,
-} from "@coss/ui/icons";
 import { showToast } from "@calcom/ui/components/toast";
 import { useCalcomTheme } from "@calcom/ui/styles";
 import CancelBooking from "@calcom/web/components/booking/CancelBooking";
 import { RoutingTraceSheet } from "@calcom/web/components/booking/RoutingTraceSheet";
 import EventReservationSchema from "@calcom/web/components/schemas/EventReservationSchema";
+import assignmentReasonBadgeTitleMap from "@calcom/web/lib/booking/assignmentReasonBadgeTitleMap";
 import { timeZone } from "@calcom/web/lib/clock";
-
+import { CalendarIcon, CheckIcon, ChevronLeftIcon, ExternalLinkIcon, XIcon } from "@coss/ui/icons";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
+import classNames from "classnames";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Fragment, useEffect, useState } from "react";
+import { Toaster } from "sonner";
+import { z } from "zod";
 import { usePaymentStatus } from "../hooks/usePaymentStatus";
 import type { PageProps } from "./bookings-single-view.getServerSideProps";
 
@@ -291,6 +282,12 @@ export default function Success(props: PageProps) {
   const needsConfirmation = bookingInfo.status === BookingStatus.PENDING && eventType.requiresConfirmation;
   const userIsOwner = !!(session?.user?.id && eventType.owner?.id === session.user.id);
   const isLoggedIn = session?.user;
+
+  const { data: meetingSummary } = trpc.viewer.meetingSummary.get.useQuery(
+    { bookingUid: bookingInfo.uid },
+    { enabled: !!bookingInfo.uid && !!isLoggedIn }
+  );
+
   const isCancelled =
     status === "CANCELLED" ||
     status === "REJECTED" ||
@@ -1140,6 +1137,23 @@ export default function Success(props: PageProps) {
                     </>
                   ))}
               </div>
+              {meetingSummary && (
+                <div className="mt-4 border-t pt-4">
+                  <p className="mb-2 text-sm font-semibold text-gray-900">{t("ai_meeting_summary")}</p>
+                  {(meetingSummary.status === "PENDING" || meetingSummary.status === "PROCESSING") && (
+                    <p className="text-sm text-gray-500">{t("ai_meeting_summary_pending")}</p>
+                  )}
+                  {meetingSummary.status === "FAILED" && (
+                    <p className="text-sm text-red-500">{t("ai_meeting_summary_failed")}</p>
+                  )}
+                  {meetingSummary.status === "COMPLETED" && meetingSummary.summary && (
+                    <div>
+                      <p className="whitespace-pre-wrap text-sm text-gray-700">{meetingSummary.summary}</p>
+                      <p className="mt-2 text-xs text-gray-400">{t("ai_meeting_summary_disclaimer")}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               {isGmail && !isFeedbackMode && (
                 <Alert
                   className="main -mb-20 mt-4 inline-block ltr:text-left rtl:text-right sm:-mt-4 sm:mb-4 sm:w-full sm:max-w-xl sm:align-middle"

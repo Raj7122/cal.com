@@ -57,6 +57,7 @@ import {
 import { MultiplePrivateLinksController } from "@calcom/web/modules/event-types/components";
 import AddVerifiedEmail from "@calcom/web/modules/event-types/components/AddVerifiedEmail";
 import { LearnMoreLink } from "@calcom/features/eventtypes/components/LearnMoreLink";
+import { useFlags } from "@calcom/web/modules/feature-flags/hooks/useFlags";
 import type { Dispatch, SetStateAction } from "react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -424,6 +425,7 @@ export const EventAdvancedTab = ({
   const platformContext = useAtomsContext();
   const formMethods = useFormContext<FormValues>();
   const { t } = useLocale();
+  const flags = useFlags();
   const [showEventNameTip, setShowEventNameTip] = useState(false);
   const [darkModeError, setDarkModeError] = useState(false);
   const [lightModeError, setLightModeError] = useState(false);
@@ -780,6 +782,23 @@ export const EventAdvancedTab = ({
           />
         )}
       />
+      {!isPlatform && flags["ai-meeting-summary"] && (
+        <Controller
+          name="calVideoSettings.enableAIMeetingSummary"
+          render={({ field: { value, onChange } }) => (
+            <SettingsToggle
+              labelClassName="text-sm"
+              toggleSwitchAtTheEnd={true}
+              switchContainerClassName="border-subtle rounded-lg border py-6 px-4 sm:px-6"
+              title={t("ai_meeting_summary")}
+              data-testid="ai-meeting-summary-toggle"
+              description={t("ai_meeting_summary_description")}
+              checked={value ?? false}
+              onCheckedChange={(e) => onChange(e)}
+            />
+          )}
+        />
+      )}
       {!isPlatform && (
         <Controller
           name="autoTranslateDescriptionEnabled"

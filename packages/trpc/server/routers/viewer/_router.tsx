@@ -30,6 +30,7 @@ import { holidaysRouter } from "./holidays/_router";
 import { i18nRouter } from "./i18n/_router";
 import { insightsRouter } from "./insights/_router";
 import { meRouter } from "./me/_router";
+import { meetingSummaryRouter } from "./meetingSummary/_router";
 import { oAuthRouter } from "./oAuth/_router";
 import { oooRouter } from "./ooo/_router";
 import { viewerOrganizationsRouter } from "./organizations/_router";
@@ -93,4 +94,5 @@ export const viewerRouter = router({
   travelSchedules: travelSchedulesRouter,
   aiVoiceAgent: aiVoiceAgentRouter,
   phoneNumber: phoneNumberRouter,
+  meetingSummary: meetingSummaryRouter,
 });

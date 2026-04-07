@@ -18,6 +18,7 @@ export { CreditBalanceLimitReachedEmail } from "./CreditBalanceLimitReachedEmail
 export { CreditBalanceLowWarningEmail } from "./CreditBalanceLowWarningEmail";
 export { DailyVideoDownloadRecordingEmail } from "./DailyVideoDownloadRecordingEmail";
 export { DailyVideoDownloadTranscriptEmail } from "./DailyVideoDownloadTranscriptEmail";
+export { MeetingSummaryEmail } from "./MeetingSummaryEmail";
 export { DisabledAppEmail } from "./DisabledAppEmail";
 export { FeedbackEmail } from "./FeedbackEmail";
 export { ForgotPasswordEmail } from "./ForgotPasswordEmail";

@@ -42,6 +42,8 @@ const tasks: Record<TaskTypes, () => Promise<TaskHandler>> = {
     import("./cancelProrationReminder").then((module) => module.cancelProrationReminder),
   bookingAudit: () => import("./bookingAudit").then((module) => module.bookingAudit),
   webhookDelivery: () => import("./webhookDelivery").then((module) => module.webhookDelivery),
+  generateMeetingSummary: () =>
+    import("./generateMeetingSummary").then((module) => module.generateMeetingSummary),
 };
 
 export const tasksConfig = {

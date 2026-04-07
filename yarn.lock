@@ -2530,6 +2530,7 @@ __metadata:
   dependencies:
     "@calcom/atoms": "workspace:*"
     "@calcom/dayjs": "workspace:*"
+    "@calcom/emails": "workspace:*"
     "@calcom/i18n": "workspace:*"
     "@calcom/lib": "workspace:*"
     "@calcom/testing": "workspace:*"
@@ -2537,6 +2538,7 @@ __metadata:
     "@calcom/ui": "workspace:*"
     "@coss/ui": "workspace:*"
     "@evyweb/ioctopus": "npm:1.2.0"
+    "@google/generative-ai": "npm:0.21.0"
     "@tanstack/react-table": "npm:8.20.6"
     "@tanstack/react-virtual": "npm:3.10.9"
     "@testing-library/react-hooks": "npm:8.0.1"
@@ -5130,6 +5132,13 @@ __metadata:
   version: 4.0.0
   resolution: "@google-cloud/precise-date@npm:4.0.0"
   checksum: 10/7c897bcad6a40efd77df165fca8a57bd3fbb84e6ace848085b16233c1086c32c06258caa88b9c9aaf7d4029ded13d01b57d1b5fd808dc5722cf57626ac4a386b
+  languageName: node
+  linkType: hard
+
+"@google/generative-ai@npm:0.21.0":
+  version: 0.21.0
+  resolution: "@google/generative-ai@npm:0.21.0"
+  checksum: 10/68c4163b7ac0c449cdbdf83b85dd77b8d96ee2b883b0190bcb1c7e76d98b56968d3e554ff62c555c3a3814855bac3bfc1cf2035f2b7ddf71f313b5c846b60f31
   languageName: node
   linkType: hard
 

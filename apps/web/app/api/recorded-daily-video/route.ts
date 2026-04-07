@@ -218,6 +218,27 @@ export async function postHandler(request: NextRequest) {
         },
       });
 
+      // Enqueue AI meeting summary generation if enabled for this event type.
+      const enableAIMeetingSummary =
+        booking.eventType?.calVideoSettings?.enableAIMeetingSummary ?? false;
+
+      if (enableAIMeetingSummary && batchProcessorJobAccessLink?.transcription) {
+        try {
+          const { getTasker } = await import("@calcom/features/tasker");
+          const tasker = await getTasker();
+          await tasker.create("generateMeetingSummary", {
+            bookingId: bookingReference.bookingId as number,
+            transcriptionUrl: batchProcessorJobAccessLink.transcription,
+          });
+        } catch (err) {
+          // Never let summary failure break the webhook response or existing transcription flow.
+          log.error("Failed to enqueue generateMeetingSummary task", {
+            err,
+            bookingId: bookingReference.bookingId,
+          });
+        }
+      }
+
       return NextResponse.json({ message: "Success" });
     } else {
       log.error("Invalid type in /recorded-daily-video", body);
