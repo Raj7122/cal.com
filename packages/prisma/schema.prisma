@@ -128,6 +128,7 @@ model CalVideoSettings {
   disableTranscriptionForGuests        Boolean  @default(false)
   disableTranscriptionForOrganizer     Boolean  @default(false)
   requireEmailForGuests                Boolean  @default(false)
+  enableAIMeetingSummary               Boolean  @default(false)
   createdAt                            DateTime @default(now())
   updatedAt                            DateTime @updatedAt
 }
@@ -868,6 +869,13 @@ enum BookingStatus {
   AWAITING_HOST @map("awaiting_host")
 }
 
+enum MeetingSummaryStatus {
+  PENDING    @map("pending")
+  PROCESSING @map("processing")
+  COMPLETED  @map("completed")
+  FAILED     @map("failed")
+}
+
 model Booking {
   id                           Int                               @id @default(autoincrement())
   uid                          String                            @unique
@@ -937,6 +945,7 @@ model Booking {
   report                       BookingReport?
   wrongAssignmentReports       WrongAssignmentReport[]
   routingTrace                 RoutingTrace?
+  meetingSummary               MeetingSummary?
 
   // @@partial_index([reassignById])
 
@@ -965,6 +974,19 @@ model Tracking {
   utm_content  String?
 
   @@unique([bookingId])
+}
+
+model MeetingSummary {
+  id        Int                  @id @default(autoincrement())
+  bookingId Int                  @unique
+  booking   Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  summary   String?
+  status    MeetingSummaryStatus @default(PENDING)
+  provider  String?
+  model     String?
+  error     String?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 }
 
 model Schedule {
