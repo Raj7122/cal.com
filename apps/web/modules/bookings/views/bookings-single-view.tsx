@@ -1,5 +1,6 @@
 "use client";
 
+import type { MeetingSummaryDto } from "@calcom/lib/dto/MeetingSummaryDto";
 import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import type { getEventLocationValue } from "@calcom/app-store/locations";
 import { getSuccessPageLocationMessage, guessEventLocationType } from "@calcom/app-store/locations";
@@ -1137,23 +1138,7 @@ export default function Success(props: PageProps) {
                     </>
                   ))}
               </div>
-              {meetingSummary && (
-                <div className="mt-4 border-t pt-4">
-                  <p className="mb-2 text-sm font-semibold text-gray-900">{t("ai_meeting_summary")}</p>
-                  {(meetingSummary.status === "PENDING" || meetingSummary.status === "PROCESSING") && (
-                    <p className="text-sm text-gray-500">{t("ai_meeting_summary_pending")}</p>
-                  )}
-                  {meetingSummary.status === "FAILED" && (
-                    <p className="text-sm text-red-500">{t("ai_meeting_summary_failed")}</p>
-                  )}
-                  {meetingSummary.status === "COMPLETED" && meetingSummary.summary && (
-                    <div>
-                      <p className="whitespace-pre-wrap text-sm text-gray-700">{meetingSummary.summary}</p>
-                      <p className="mt-2 text-xs text-gray-400">{t("ai_meeting_summary_disclaimer")}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+              {meetingSummary && <MeetingSummaryCard summary={meetingSummary} />}
               {isGmail && !isFeedbackMode && (
                 <Alert
                   className="main -mb-20 mt-4 inline-block ltr:text-left rtl:text-right sm:-mt-4 sm:mb-4 sm:w-full sm:max-w-xl sm:align-middle"
@@ -1369,4 +1354,103 @@ function RecurringBookings({
       <span className="text-bookinglight">({formatToLocalizedTimezone(date, language, tz)})</span>
     </div>
   );
+}
+
+function MeetingSummaryCard({ summary }: { summary: MeetingSummaryDto }) {
+  const { t } = useLocale();
+  const [isOpen, setIsOpen] = useState(true);
+
+  if (summary.status === "PENDING" || summary.status === "PROCESSING") {
+    return (
+      <div className="mt-4 flex items-center gap-2 border-t pt-4">
+        <Icon name="loader" className="h-4 w-4 animate-spin text-gray-400" />
+        <p className="text-sm text-gray-500">{t("ai_meeting_summary_pending")}</p>
+      </div>
+    );
+  }
+
+  if (summary.status === "FAILED") {
+    return (
+      <div className="mt-4 flex items-center gap-2 border-t pt-4">
+        <Icon name="circle-x" className="h-4 w-4 text-red-400" />
+        <p className="text-sm text-red-500">{t("ai_meeting_summary_failed")}</p>
+      </div>
+    );
+  }
+
+  if (summary.status !== "COMPLETED" || !summary.summary) return null;
+
+  // Parse the markdown sections Gemini returns into structured blocks
+  const sections = parseSummarySections(summary.summary);
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon name="sparkles" className="h-4 w-4 text-violet-500" />
+            <span className="text-sm font-semibold text-gray-900">{t("ai_meeting_summary")}</span>
+          </div>
+          <Icon
+            name={isOpen ? "chevron-up" : "chevron-down"}
+            className="h-4 w-4 text-gray-400"
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-3 space-y-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+            {sections.length > 0 ? (
+              sections.map((section) => (
+                <div key={section.title}>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {section.title}
+                  </p>
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    {section.items.map((item, i) => (
+                      <p key={i} className={section.isList ? "flex gap-1" : ""}>
+                        {section.isList && <span className="mt-0.5 shrink-0 text-gray-400">•</span>}
+                        <span>{item}</span>
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="whitespace-pre-wrap text-sm text-gray-700">{summary.summary}</p>
+            )}
+            <p className="border-t pt-2 text-xs text-gray-400">{t("ai_meeting_summary_disclaimer")}</p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+/** Parse Gemini's markdown output into titled sections for structured display. */
+function parseSummarySections(text: string): { title: string; items: string[]; isList: boolean }[] {
+  const sections: { title: string; items: string[]; isList: boolean }[] = [];
+  const lines = text.split("\n");
+  let current: { title: string; items: string[]; isList: boolean } | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Match **Section Title** or ## Section Title
+    const isHeading = trimmed.startsWith("**") || trimmed.startsWith("#");
+    if (isHeading) {
+      if (current) sections.push(current);
+      const title = trimmed.replace(/^\*\*|\*\*$/g, "").replace(/^#+\s*/, "");
+      current = { title, items: [], isList: false };
+      continue;
+    }
+    if (!current || !trimmed) continue;
+    // Bullet list item
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)/);
+    if (bulletMatch) {
+      current.items.push(bulletMatch[1]);
+      current.isList = true;
+    } else {
+      current.items.push(trimmed);
+    }
+  }
+  if (current) sections.push(current);
+  return sections.filter((s) => s.items.length > 0);
 }
